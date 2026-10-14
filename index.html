@@ -37,6 +37,13 @@ button{font-family:inherit}
 #sideToggle{position:fixed;top:80px;left:322px;z-index:1002;background:var(--panel);color:var(--ink2);border:1px solid var(--line);
   border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;transition:left .25s}
 #sideToggle.closed{left:14px}
+#rightToggle{position:fixed;top:80px;right:452px;z-index:1002;background:var(--panel);color:var(--ink2);border:1px solid var(--line);
+  border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;transition:right .25s;display:none}
+body.info-open #rightToggle{display:block}
+body.right-closed #rightToggle{right:14px}
+#info,#resPanel{transition:transform .25s}
+body.right-closed #info,body.right-closed #resPanel{transform:translateX(calc(100% + 20px))}
+.leaflet-control-world a{display:flex!important;align-items:center;justify-content:center;color:#333}
 .side-top{padding:12px 13px 8px;border-bottom:1px solid var(--line)}
 .lbl{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);margin:0 0 6px}
 .legend-row{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--ink);user-select:none}
@@ -179,6 +186,9 @@ body.side-closed .leaflet-top.leaflet-left{left:44px}
   #side{top:56px;width:calc(100% - 28px);bottom:auto;max-height:46vh}
   #sideToggle{top:60px;left:auto;right:14px}
   #sideToggle.closed{left:auto}
+  #rightToggle{top:96px;right:14px}
+  body.right-closed #rightToggle{right:14px}
+  body.right-closed #info,body.right-closed #resPanel{transform:translateY(calc(100% + 60vh))}
   #info,body.has-res #info{top:auto;left:8px;right:8px;width:auto;height:46vh;bottom:8px}
   #resPanel{top:auto;left:8px;right:8px;width:auto;height:30vh;bottom:calc(46vh + 14px)}
   .leaflet-top.leaflet-left,body.side-closed .leaflet-top.leaflet-left{left:0;top:56px}
@@ -192,6 +202,7 @@ body.side-closed .leaflet-top.leaflet-left{left:44px}
 </div>
 
 <button id="sideToggle" title="Show or hide the panel">‹</button>
+<button id="rightToggle" title="Show or hide the information boxes">›</button>
 <div id="side">
   <div class="side-top">
     <div class="lbl">Can a non-government person or group do it?</div>
@@ -397,7 +408,7 @@ function countryBounds(iso){
   parts.slice(1).forEach(p=>{ if(near.contains(p.b.getCenter())) b.extend(p.b); });
   return b;
 }
-function fitCountry(iso){ const b=countryBounds(iso); if(b) map.fitBounds(b,{paddingTopLeft:[document.body.classList.contains('side-closed')?20:330,70],paddingBottomRight:[450,20],maxZoom:7}); }
+function fitCountry(iso){ const b=countryBounds(iso); if(b) map.fitBounds(b,{paddingTopLeft:[document.body.classList.contains('side-closed')?20:330,70],paddingBottomRight:[document.body.classList.contains('right-closed')?20:450,20],maxZoom:7}); }
 function enterCountry(iso,feat,quiet,pending){
   if(!iso) return;
   clearAdm(1); nav={iso:iso,adm1:null,adm1Feat:null,pendingAdm1:pending||null};
@@ -427,7 +438,7 @@ function munFiles(iso){ if((LEVELS.a3p||{})[iso]){ const a=[]; for(let i=1;i<=LE
 function enterAdm2(name,feat){
   nav.adm2=name; if(adm3Layer){ map.removeLayer(adm3Layer); adm3Layer=null; }
   if(adm2Layer) adm2Layer.eachLayer(l=>l.setStyle(adm2Style(l.feature)));
-  try{ map.fitBounds(L.geoJson(feat).getBounds(),{paddingTopLeft:[document.body.classList.contains('side-closed')?20:330,70],paddingBottomRight:[450,20],maxZoom:11}); }catch(e){}
+  try{ map.fitBounds(L.geoJson(feat).getBounds(),{paddingTopLeft:[document.body.classList.contains('side-closed')?20:330,70],paddingBottomRight:[document.body.classList.contains('right-closed')?20:450,20],maxZoom:11}); }catch(e){}
   showLocal(name);
   const iso=nav.iso, a1=nav.adm1, files=munFiles(iso);
   if(!resMun(iso,a1).length||!files) return;
@@ -444,7 +455,7 @@ function enterAdm2(name,feat){
 function enterAdm1(name,feat){
   nav.adm1=name; nav.adm1Feat=feat; nav.adm2=null; clearAdm(2);
   if(adm1Layer) adm1Layer.eachLayer(l=>l.setStyle(adm1Style(l.feature)));
-  try{ const b=L.geoJson(feat).getBounds(); map.fitBounds(b,{paddingTopLeft:[document.body.classList.contains('side-closed')?20:330,70],paddingBottomRight:[450,20],maxZoom:9}); }catch(e){}
+  try{ const b=L.geoJson(feat).getBounds(); map.fitBounds(b,{paddingTopLeft:[document.body.classList.contains('side-closed')?20:330,70],paddingBottomRight:[document.body.classList.contains('right-closed')?20:450,20],maxZoom:9}); }catch(e){}
   showRecord(nav.iso,name);
   setHash(nav.iso,name);
   const iso=nav.iso;
@@ -646,7 +657,7 @@ function showLocal(name){
 }
 function backToAdm1(){ const iso=nav.iso, a1=nav.adm1; nav.adm2=null; if(adm3Layer){ map.removeLayer(adm3Layer); adm3Layer=null; }
   if(adm2Layer) adm2Layer.eachLayer(l=>l.setStyle(adm2Style(l.feature)));
-  try{ if(nav.adm1Feat) map.fitBounds(L.geoJson(nav.adm1Feat).getBounds(),{paddingTopLeft:[document.body.classList.contains('side-closed')?20:330,70],paddingBottomRight:[450,20],maxZoom:9}); }catch(e){}
+  try{ if(nav.adm1Feat) map.fitBounds(L.geoJson(nav.adm1Feat).getBounds(),{paddingTopLeft:[document.body.classList.contains('side-closed')?20:330,70],paddingBottomRight:[document.body.classList.contains('right-closed')?20:450,20],maxZoom:9}); }catch(e){}
   showRecord(iso,a1); }
 function showMunicipal(name){
   const iso=nav.iso, a1=nav.adm1, a2=nav.adm2, cn=countryName(iso);
@@ -731,6 +742,14 @@ document.getElementById('btnAbout').onclick=()=>{
   modal.classList.add('open');
 };
 
+/* ---------------- right boxes toggle, zoom-all-the-way-out button ---------------- */
+const rt=document.getElementById('rightToggle');
+function setRight(closed){ document.body.classList.toggle('right-closed',closed); const m=window.innerWidth<760; rt.textContent=closed?(m?'▴':'‹'):(m?'▾':'›'); }
+rt.onclick=()=>setRight(!document.body.classList.contains('right-closed'));
+new MutationObserver(()=>{ const o=info.classList.contains('open'); if(o&&!document.body.classList.contains('info-open')) setRight(false); document.body.classList.toggle('info-open',o); }).observe(info,{attributes:true,attributeFilter:['class']});
+setRight(false);
+const WorldBtn=L.Control.extend({options:{position:'topleft'},onAdd(){ const d=L.DomUtil.create('div','leaflet-bar leaflet-control leaflet-control-world'); const a=L.DomUtil.create('a','',d); a.href='#'; a.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg>'; a.title='Zoom all the way out'; a.setAttribute('role','button'); a.setAttribute('aria-label','Zoom all the way out'); L.DomEvent.on(a,'click',e=>{ L.DomEvent.stop(e); goWorld(); }); return d; }});
+map.addControl(new WorldBtn());
 /* ---------------- side toggle, hash ---------------- */
 const side=document.getElementById('side'), st=document.getElementById('sideToggle');
 st.onclick=()=>{ side.classList.toggle('closed'); st.classList.toggle('closed'); document.body.classList.toggle('side-closed'); st.textContent=side.classList.contains('closed')?'›':'‹'; };
@@ -741,7 +760,7 @@ if(window.innerWidth<760){ side.classList.add('closed'); st.classList.add('close
   pairs.forEach(([o,i])=>{ const b=document.getElementById(i); b.addEventListener('scroll',upd,{passive:true}); b.addEventListener('toggle',()=>setTimeout(upd,0),true); b.addEventListener('click',()=>setTimeout(upd,0)); });
   new MutationObserver(()=>setTimeout(upd,0)).observe(document.body,{subtree:true,childList:true});
   window.addEventListener('resize',upd); window._scrollHint=upd; })();
-['side','info','resPanel','modal','sideToggle'].forEach(id=>{ const el=document.getElementById(id); L.DomEvent.disableScrollPropagation(el); L.DomEvent.disableClickPropagation(el); });
+['side','info','resPanel','modal','sideToggle','rightToggle'].forEach(id=>{ const el=document.getElementById(id); L.DomEvent.disableScrollPropagation(el); L.DomEvent.disableClickPropagation(el); });
 function setHash(iso,a1){ try{ history.replaceState(null,'',iso?('#'+iso+(a1?'/'+encodeURIComponent(a1):'')):location.pathname+location.search); }catch(e){} }
 function routeFromHash(){ const h=decodeURIComponent((location.hash||'').slice(1)); if(!h) return; const [iso,a1]=h.split('/'); if(!iso) return; enterCountry(iso.toUpperCase(),null,false,a1||null); }
 
